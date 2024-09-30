@@ -80,7 +80,7 @@ def plot_selected_columns(data, selected_columns):
     fig, ax1 = plt.subplots(figsize=(10, 6))  # Adjusted to 10x6 to fit better in smaller windows
     #ax2 = ax1
     
-    fig.canvas.manager.set_window_title("LTB_sat_realtime_telemetry_plot")  # Set the window title
+    fig.canvas.manager.set_window_title("LTB_Sat_Telemetry_Plotter")  # Set the window title
     colors = ['tab:blue', 'tab:green', 'tab:red']  # Color for each plot
     #texts = []  # List to store annotation texts for adjustment
     last_position_above = True  # To alternate annotation positions
@@ -160,8 +160,8 @@ def main():
             # Step 3: Validate that user has selected 1 to 3 columns
             if not (1 <= len(selected_columns) <= 3):
                 raise ValueError("You must select between 1 and 3 columns.")
-            # Raise Error if invalid column selected
-            if len(data.columns) in selected_columns:
+            # Raise Error if invalid column (out of bound) is selected
+            if any(col >= len(data.columns) for col in selected_columns):
                 raise ValueError(f"You must select a column between 1 and {len(data.columns)-1}.")
             plot_selected_columns(data, selected_columns)
         except ValueError as e:
