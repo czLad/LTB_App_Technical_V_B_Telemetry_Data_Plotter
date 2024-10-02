@@ -31,7 +31,7 @@ MAX_COLUMNS = 4  # Maximum number of columns user can select
 
 # ------- Class Definition ----------- 
 
-# Annotation_Max_Min object like a  C++ struct all public access members
+# Annotation_Max_Min object like a C++ struct all public access members
 class Annotation_Max_Min:
     """Class to represent peak and minimum annotations."""
     def __init__(self, peak_xy, min_xy):
@@ -141,7 +141,7 @@ def plot_selected_columns(data, selected_columns):
             #annotate_max_min_of_layered_axs
             annotate_axs_max_min_levels(ax, col_names, annotation_max_mins, colors, last_position_above=last_position_above, level=len(selected_columns))
     fig.tight_layout(rect=[0,0,1,1])
-    #Suptitle needs to be dynamic
+    # Suptitle generated dynamically
     fig.suptitle(get_fig_title_string('Satellite Telemetry:', col_names, col_names_size=len(col_names)), fontsize=10, y=0.995)
     plt.draw()  # Draw the figure without blocking the loop
     plt.pause(0.001)  # Pause briefly to allow the figure to be updated
