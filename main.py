@@ -21,9 +21,13 @@ Dependencies:
 
 import tkinter as tk
 from tkinter import messagebox
-from tkinter import font
+
 import matplotlib.pyplot as plt
 import pandas as pd
+
+# ------- Constants Definition ----------- 
+DEBUG = False  # Set to True to enable debug printing
+MAX_COLUMNS = 4  # Maximum number of columns user can select
 
 # ------- Class Definition ----------- 
 
@@ -78,31 +82,31 @@ def get_fig_title_string(title_string, col_names=[], col_names_size=1):
 def plot_selected_columns(data, selected_columns):
     # Create a figure and the main axis
     fig, ax1 = plt.subplots(figsize=(10, 6))  # Adjusted to 10x6 to fit better in smaller windows
-    #ax2 = ax1
-    
     fig.canvas.manager.set_window_title("LTB_Sat_Telemetry_Plotter")  # Set the window title
-    colors = ['tab:blue', 'tab:green', 'tab:red']  # Color for each plot
-    #texts = []  # List to store annotation texts for adjustment
+    colors = ['tab:blue', 'tab:green', 'tab:red', 'tab:orange']  # Color for each plot
+
     last_position_above = True  # To alternate annotation positions
     annotation_max_mins = []
     col_names = []
     overall_min = float('inf')
     overall_max = float('-inf')
-    # col_name = data.columns[col_idx]
+
     overall_min = min(data[data.columns[col_idx]].min() for idx, col_idx in enumerate(selected_columns))
     overall_max = max(data[data.columns[col_idx]].max() for idx, col_idx in enumerate(selected_columns))
     # Add some buffer for better visualization
     margin = (overall_max  - overall_min) * 0.05
-    print("overall_min outside loop: ", overall_min)
-    print("overall_max outside loop: ", overall_max)
-    # need to set overall max min to avoid clipping
+    if DEBUG:
+        print("overall_min outside loop: ", overall_min)
+        print("overall_max outside loop: ", overall_max)
+    # Need to set overall max min to avoid clipping
     ax1.set_ylim(overall_min - margin, overall_max + margin)
     # Plot the selected columns and annotate peaks and lows
     for idx, col_idx in enumerate(selected_columns):
         col_name = data.columns[col_idx]
         col_names.append(col_name)
         color = colors[idx % len(colors)]  # Assign colors in a loop
-        print("col_idx: ", col_idx)
+        if DEBUG:
+            print("col_idx: ", col_idx)
         # Determine whether to use ax1 or a twin axis for the plot
         if idx == 0:
             ax = ax1  # First column is plotted on the primary axis
@@ -110,19 +114,21 @@ def plot_selected_columns(data, selected_columns):
         else:
             ax = ax1.twinx()  # Create a twin axis for the second and third columns
         # Position the third y-axis if there are three columns
-        if idx == 2:
-            ax.spines['right'].set_position(('outward', 60))
+        if idx > 1:
+            ax.spines['right'].set_position(('outward', 60 * (idx - 1)))
         
-        print(f"axes{idx}", ax1)
+        if DEBUG:
+            print(f"axes{idx}", ax1)
         # Plot the selected column on the current axis
         ax.plot(data['Satellite Date/Time UTC'], data[col_name], color=color, label=col_name)
         ax.set_ylabel(col_name, color=color)
         # Annotate the peaks and lows for each plot
         peak_time = data['Satellite Date/Time UTC'].iloc[data[col_name].idxmax()]
         min_time = data['Satellite Date/Time UTC'].iloc[data[col_name].idxmin()]
-        print("overall_min inside loop: ", overall_min)
-        print("overall_max inside loop: ", overall_max)
-        # not sure why but have to keep setting ylim to avoid clipping and accurate max min representation
+        if DEBUG:
+            print("overall_min inside loop: ", overall_min)
+            print("overall_max inside loop: ", overall_max)
+        # matplotlib requires to keep setting ylim to avoid clipping and accurate max min representation
         # suspicion is matplot lip automatically reset set_ylim everytime it is not specified
         ax.set_ylim(overall_min - margin, overall_max + margin)
         # Create an Annotation object for the peak and min values
@@ -158,8 +164,8 @@ def main():
             if 0 in selected_columns:
                 selected_columns.remove(0)
             # Step 3: Validate that user has selected 1 to 3 columns
-            if not (1 <= len(selected_columns) <= 3):
-                raise ValueError("You must select between 1 and 3 columns.")
+            if not (1 <= len(selected_columns) <= MAX_COLUMNS):
+                raise ValueError(f"You must select between 1 and {MAX_COLUMNS} columns.")
             # Raise Error if invalid column (out of bound) is selected
             if any(col >= len(data.columns) for col in selected_columns):
                 raise ValueError(f"You must select a column between 1 and {len(data.columns)-1}.")
@@ -179,7 +185,7 @@ def main():
     root.configure(bg="black")
 
     # Instructions label
-    instructions = ("Enter the column numbers you want to plot (up to 3), separated by commas: (e.g. 1,2,3)\n"
+    instructions = (f"Enter the column numbers you want to plot (up to {MAX_COLUMNS}), separated by commas: (e.g. 1,2,3)\n"
                     "Satellite Date/Time UTC is by default represented by the X-axis")
     instruction_label = tk.Label(root, text=instructions, fg="green", bg="black", font=("Courier", 12, "bold"))
     instruction_label.pack(pady=10)
@@ -215,6 +221,7 @@ def main():
     entry_columns.focus()
 
     # Submit button with green border and black background
+    # Border not necessary on Linux
     submit_button_border = tk.Frame(root, highlightbackground="green", highlightthickness=2, bd=0, bg="black")
 
     submit_button = tk.Button(submit_button_border, text="Submit", command=on_submit, font=("Courier", 12), relief="solid", bg="black", fg="green", 
